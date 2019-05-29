@@ -88,6 +88,13 @@ has_field 'dhcpd' =>
    label => 'DHCP server',
    );
 
+has_field 'dev' =>
+  (
+   type => 'Text',
+   default => "",
+   label => 'Assign to the Network interface',
+   );
+
 =head2 update_fields
 
 Set the default network value
