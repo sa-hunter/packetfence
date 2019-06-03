@@ -414,6 +414,17 @@ export const pfConfigurationRoutedNetworkViewFields = (context = {}) => {
           ]
         },
         {
+          label: i18n.t('Interface'),
+          text: i18n.t('Define a network interface to associate it with the dhcp scope.(In most cases you don\'t need to do it)'),
+          fields: [
+            {
+              key: 'dev',
+              component: pfFormInput,
+              attrs: pfConfigurationAttributesFromMeta(meta, 'dev'),
+            }
+          ]
+        },
+        {
           label: null, /* no label */
           fields: [
             {

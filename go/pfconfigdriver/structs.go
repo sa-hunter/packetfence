@@ -310,6 +310,7 @@ type RessourseNetworkConf struct {
 	ClusterIPs              string    `json:"cluster_ips"`
 	IpReserved              string    `json:"ip_reserved"`
 	IpAssigned              string    `json:"ip_assigned"`
+	Dev                     string    `json:"dev"`
 	Interface               Interface `json:"interface"`
 	PortalFQDN              string    `json:"portal_fqdn"`
 	PoolBackend             string    `json:"pool_backend"`
