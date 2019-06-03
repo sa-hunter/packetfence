@@ -65,6 +65,9 @@ func (d *Interfaces) readConfig() {
 	var DHCPinterfaces pfconfigdriver.DHCPInts
 	pfconfigdriver.FetchDecodeSocket(ctx, &DHCPinterfaces)
 
+	var DHCPAdditionalinterfaces pfconfigdriver.DHCPAdditionalListen
+	pfconfigdriver.FetchDecodeSocket(ctx, &DHCPAdditionalinterfaces)
+
 	var keyConfNet pfconfigdriver.PfconfigKeys
 	keyConfNet.PfconfigNS = "config::Network"
 	keyConfNet.PfconfigHostnameOverlay = "yes"
@@ -73,6 +76,8 @@ func (d *Interfaces) readConfig() {
 
 	var int_dhcp []string
 
+	var interfaces_dhcp []string
+	interfaces_dhcp = sharedutils.RemoveDuplicates(append(interfaces.Element, DHCPAdditionalinterfaces.Element...))
 	for _, vi := range DHCPinterfaces.Element {
 		for key, dhcp_int := range vi.(map[string]interface{}) {
 			if key == "int" {
@@ -82,7 +87,7 @@ func (d *Interfaces) readConfig() {
 	}
 
 	wg := &sync.WaitGroup{}
-	for _, v := range sharedutils.RemoveDuplicates(append(interfaces.Element, int_dhcp...)) {
+	for _, v := range sharedutils.RemoveDuplicates(append(interfaces_dhcp, int_dhcp...)) {
 
 		eth, err := net.InterfaceByName(v)
 

@@ -49,10 +49,11 @@ type configStruct struct {
 		Isolation    PassthroughsIsolationConf
 	}
 	Interfaces struct {
-		ListenInts        ListenInts
-		ManagementNetwork ManagementNetwork
-		DHCPInts          DHCPInts
-		DNSInts           DNSInts
+		ListenInts           ListenInts
+		ManagementNetwork    ManagementNetwork
+		DHCPInts             DHCPInts
+		DNSInts              DNSInts
+		DHCPAdditionalListen DHCPAdditionalListen
 	}
 	PfConf struct {
 		General       PfConfGeneral
@@ -211,6 +212,15 @@ type ListenInts struct {
 	StructConfig
 	PfconfigMethod          string `val:"element"`
 	PfconfigNS              string `val:"interfaces::listen_ints"`
+	PfconfigArray           string `val:"yes"`
+	PfconfigHostnameOverlay string `val:"yes"`
+	Element                 []string
+}
+
+type DHCPAdditionalListen struct {
+	StructConfig
+	PfconfigMethod          string `val:"element"`
+	PfconfigNS              string `val:"resource::dhcp_additional_listen"`
 	PfconfigArray           string `val:"yes"`
 	PfconfigHostnameOverlay string `val:"yes"`
 	Element                 []string
