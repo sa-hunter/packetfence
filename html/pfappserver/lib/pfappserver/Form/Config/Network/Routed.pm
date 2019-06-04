@@ -135,6 +135,7 @@ sub validate {
         }
     }
     my $interface = $interface_model->interfaceForDestination($self->value->{next_hop});
+    $interface = $self->value->{dev} if (defined($self->value->{dev}));
     unless ($interface) {
         $self->field('next_hop')->add_error("The router IP has no gateway on a network interface.");
     }
