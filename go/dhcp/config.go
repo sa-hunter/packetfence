@@ -217,7 +217,7 @@ func (d *Interfaces) readConfig() {
 							DHCPScope.leaseRange = dhcp.IPRange(ip, ips)
 
 							// Initialize dhcp pool
-							available := pool.NewDHCPPool(uint64(dhcp.IPRange(ip, ips)))
+							available := pool.NewDHCPPool(uint64(dhcp.IPRange(ip, ips)), ctx)
 
 							DHCPScope.available = available
 
@@ -279,7 +279,7 @@ func (d *Interfaces) readConfig() {
 						DHCPScope.leaseRange = dhcp.IPRange(net.ParseIP(ConfNet.DhcpStart), net.ParseIP(ConfNet.DhcpEnd))
 
 						// Initialize dhcp pool
-						available := pool.NewDHCPPool(uint64(dhcp.IPRange(net.ParseIP(ConfNet.DhcpStart), net.ParseIP(ConfNet.DhcpEnd))))
+						available := pool.NewDHCPPool(uint64(dhcp.IPRange(net.ParseIP(ConfNet.DhcpStart), net.ParseIP(ConfNet.DhcpEnd))), ctx)
 						DHCPScope.available = available
 
 						// Initialize hardware cache
