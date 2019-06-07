@@ -290,12 +290,11 @@ func (I *Interface) ServeDHCP(ctx context.Context, p dhcp.Packet, msgType dhcp.M
 	if len(handler.ip) == 0 {
 		return answer
 	}
-	// Do we have the vip ?
+	// Do we have the vip or does the backend support cluster mode ?
 
-	if VIP[I.Name] {
+	if VIP[h.Name] || handler.available.Listen() {
 
 		defer recoverName(options)
-
 
 		var Options map[string]string
 		Options = make(map[string]string)
@@ -660,6 +659,10 @@ func (I *Interface) ServeDHCP(ctx context.Context, p dhcp.Packet, msgType dhcp.M
 					// Update Global Caches
 					GlobalIpCache.Set(reqIP.String(), p.CHAddr().String(), cacheDuration)
 					GlobalMacCache.Set(p.CHAddr().String(), reqIP.String(), cacheDuration)
+					err := MysqlUpdateIp4Log(p.CHAddr().String(), reqIP.String(), cacheDuration)
+					if err != nil {
+						log.LoggerWContext(ctx).Info(err.Error())
+					}
 					// Update the cache
 					log.LoggerWContext(ctx).Info("DHCPACK on " + reqIP.String() + " to " + clientMac + " (" + clientHostname + ")")
 
