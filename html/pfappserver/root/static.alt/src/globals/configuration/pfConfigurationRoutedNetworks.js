@@ -44,6 +44,16 @@ export const pfConfigurationDHCPPoolTypesFormatter = (value, key, item) => {
   return pfConfigurationDHCPPoolTypes.find(type => type.value === value).text
 }
 
+export const pfConfigurationDHCPPoolAlgorithms = [
+  { value: '1', text: i18n.t('Random Algorithm') },
+  { value: '2', text: i18n.t('Oldest Released Algorithm') }
+]
+
+export const pfConfigurationDHCPPoolAlgorithmsFormatter = (value, key, item) => {
+  if (value === null || value === '') return null
+  return pfConfigurationDHCPPoolAlgorithms.find(type => type.value === value).text
+}
+
 export const pfConfigurationRoutedNetworksTypeFormatter = (value, key, item) => {
   if (value === null || value === '') return null
   return pfConfigurationRoutedNetworkTypes.find(type => type.value === value).text
@@ -100,6 +110,13 @@ export const pfConfigurationRoutedNetworksListColumns = [
     sortable: false,
     visible: true,
     formatter: pfConfigurationDHCPPoolTypesFormatter
+  },
+  {
+    key: 'pool_backend',
+    label: i18n.t('Backend'),
+    sortable: false,
+    visible: true,
+    formatter: pfConfigurationDHCPPoolAlgorithmsFormatter
   }
 ]
 
@@ -239,6 +256,22 @@ export const pfConfigurationRoutedNetworkViewFields = (context = {}) => {
                 trackBy: 'value',
                 label: 'text',
                 options: pfConfigurationDHCPPoolTypes
+              }
+            }
+          ]
+        },
+        {
+          label: i18n.t('DHCP Pool Algorithm'),
+          fields: [
+            {
+              key: 'algorithm',
+              component: pfFormChosen,
+              attrs: {
+                collapseObject: true,
+                placeholder: i18n.t('Select an algorithm'),
+                trackBy: 'value',
+                label: 'text',
+                options: pfConfigurationDHCPPoolAlgorithms
               }
             }
           ]
