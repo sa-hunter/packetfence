@@ -292,7 +292,7 @@ func (I *Interface) ServeDHCP(ctx context.Context, p dhcp.Packet, msgType dhcp.M
 	}
 	// Do we have the vip or does the backend support cluster mode ?
 
-	if VIP[h.Name] || handler.available.Listen() {
+	if VIP[I.Name] || handler.available.Listen() {
 
 		defer recoverName(options)
 

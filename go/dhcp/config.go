@@ -231,9 +231,9 @@ func (d *Interfaces) readConfig() {
 							sharedutils.Dec(ips)
 
 							DHCPScope.leaseRange = dhcp.IPRange(ip, ips)
-							algorithm, err := strconv.Atoi(ConfNet.Algorithm)
+							algorithm, _ := strconv.Atoi(ConfNet.Algorithm)
 							// Initialize dhcp pool
-							available, _ := pool.CreatePool(ConfNet.PoolBackend, uint64(dhcp.IPRange(ip, ips)), DHCPNet.network.IP.String()+Role, MySQLdatabase)
+							available, _ := pool.CreatePool(ConfNet.PoolBackend, uint64(dhcp.IPRange(ip, ips)), DHCPNet.network.IP.String()+Role, algorithm, MySQLdatabase, &ctx)
 
 							DHCPScope.available = available
 
@@ -294,10 +294,10 @@ func (d *Interfaces) readConfig() {
 						DHCPScope.leaseDuration = time.Duration(seconds) * time.Second
 						DHCPScope.leaseRange = dhcp.IPRange(net.ParseIP(ConfNet.DhcpStart), net.ParseIP(ConfNet.DhcpEnd))
 
-						algorithm, err := strconv.Atoi(ConfNet.Algorithm)
+						algorithm, _ := strconv.Atoi(ConfNet.Algorithm)
 
 						// Initialize dhcp pool
-						available, _ := pool.CreatePool(ConfNet.PoolBackend, uint64(dhcp.IPRange(net.ParseIP(ConfNet.DhcpStart), net.ParseIP(ConfNet.DhcpEnd))), DHCPNet.network.IP.String(), MySQLdatabase)
+						available, _ := pool.CreatePool(ConfNet.PoolBackend, uint64(dhcp.IPRange(net.ParseIP(ConfNet.DhcpStart), net.ParseIP(ConfNet.DhcpEnd))), DHCPNet.network.IP.String(), algorithm, MySQLdatabase, &ctx)
 						DHCPScope.available = available
 
 						// Initialize hardware cache

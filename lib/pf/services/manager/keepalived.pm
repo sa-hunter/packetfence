@@ -75,7 +75,8 @@ sub generateConfig {
         next unless $cfg;
         my $priority = 100 - pf::cluster::cluster_index();
         my $cluster_ip = pf::cluster::cluster_ip($interface);
-        $tags{'vrrp'} .= <<"EOT";
+        my $cluster_ip_alias = pf::cluster::cluster_ip_alias($interface);
+	$tags{'vrrp'} .= <<"EOT";
 vrrp_instance $cfg->{'ip'} {
   virtual_router_id $Config{'active_active'}{'virtual_router_id'}
   advert_int 5
@@ -84,6 +85,13 @@ vrrp_instance $cfg->{'ip'} {
   interface $interface
   preempt_delay 30
   virtual_ipaddress {
+EOT
+        if ($cluster_ip_alias ne '') {
+            $tags{'vrrp'} .= <<"EOT";
+    $cluster_ip_alias dev $interface
+EOT
+        }
+        $tags{'vrrp'} .= <<"EOT";
     $cluster_ip dev $interface
   }
 EOT

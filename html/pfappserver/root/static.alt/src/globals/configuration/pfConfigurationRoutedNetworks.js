@@ -34,6 +34,16 @@ export const pfConfigurationRoutedNetworkHtmlNote = `<div class="alert alert-war
   ${i18n.t('Adding or modifying a network requires a restart of the pfdhcp and pfdns services for the changes to take place.')}
 </div>`
 
+export const pfConfigurationDHCPPoolTypes = [
+  { value: 'memory', text: i18n.t('Memory Pool') },
+  { value: 'mysql', text: i18n.t('Mysql Pool') }
+]
+
+export const pfConfigurationDHCPPoolTypesFormatter = (value, key, item) => {
+  if (value === null || value === '') return null
+  return pfConfigurationDHCPPoolTypes.find(type => type.value === value).text
+}
+
 export const pfConfigurationRoutedNetworksTypeFormatter = (value, key, item) => {
   if (value === null || value === '') return null
   return pfConfigurationRoutedNetworkTypes.find(type => type.value === value).text
@@ -83,6 +93,13 @@ export const pfConfigurationRoutedNetworksListColumns = [
     sortable: false,
     visible: false,
     locked: true
+  },
+  {
+    key: 'pool_backend',
+    label: i18n.t('Backend'),
+    sortable: false,
+    visible: true,
+    formatter: pfConfigurationDHCPPoolTypesFormatter
   }
 ]
 
@@ -206,6 +223,22 @@ export const pfConfigurationRoutedNetworkViewFields = (context = {}) => {
               attrs: {
                 disabled: (form.fake_mac_enabled === 1),
                 values: { checked: 'enabled', unchecked: 'disabled' }
+              }
+            }
+          ]
+        },
+        {
+          label: i18n.t('DHCP Pool Backend Type'),
+          fields: [
+            {
+              key: 'pool_backend',
+              component: pfFormChosen,
+              attrs: {
+                collapseObject: true,
+                placeholder: i18n.t('Select a backend'),
+                trackBy: 'value',
+                label: 'text',
+                options: pfConfigurationDHCPPoolTypes
               }
             }
           ]
@@ -377,6 +410,17 @@ export const pfConfigurationRoutedNetworkViewFields = (context = {}) => {
                   [i18n.t('Invalid IP Address.')]: ipAddress
                 }
               }
+            }
+          ]
+        },
+        {
+          label: i18n.t('Interface'),
+          text: i18n.t('Define a network interface to associate it with the dhcp scope.(In most cases you don\'t need to do it)'),
+          fields: [
+            {
+              key: 'dev',
+              component: pfFormInput,
+              attrs: pfConfigurationAttributesFromMeta(meta, 'dev'),
             }
           ]
         },
