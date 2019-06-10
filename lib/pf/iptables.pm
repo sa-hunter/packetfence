@@ -317,6 +317,8 @@ sub generate_filter_if_src_to_chain {
         $rules .= "-A INPUT --in-interface $special_interface --jump $FW_FILTER_INPUT_DNS\n";
         $rules .= "-A INPUT --in-interface $special_interface --jump $FW_FILTER_INPUT_RADIUS\n";
         $rules .= "-A INPUT --in-interface $special_interface --jump $FW_FILTER_INPUT_PORTAL\n";
+        $rules_forward .= "-A FORWARD --in-interface $special_interface --jump $FW_FILTER_FORWARD_INT_VLAN\n";
+        $rules_forward .= "-A FORWARD --out-interface $special_interface --jump $FW_FILTER_FORWARD_INT_VLAN\n";
     }
     # high-availability interfaces handling
     foreach my $interface (map { $_->{Tint}} @ha_ints) {
