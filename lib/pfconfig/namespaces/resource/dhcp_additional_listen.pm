@@ -39,7 +39,7 @@ sub build {
 
     foreach my $network ( keys %{$self->{networks}} ) {
         if ( defined($self->{networks}{$network}{dev}) && $self->{networks}{$network}{dev} ne "") {
-            push @additional_dhcp , $self->{networks}{$network}{dev};
+            push @additional_dhcp ,  map { $_ } split(',',$self->{networks}{$network}{dev});
         }
     }
     return \@additional_dhcp;

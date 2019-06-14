@@ -2,13 +2,6 @@ package main
 
 import (
 	"encoding/binary"
-	"math"
-	"net"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
-
 	cache "github.com/fdurand/go-cache"
 	"github.com/inverse-inc/packetfence/go/dhcp/pool"
 	"github.com/inverse-inc/packetfence/go/log"
@@ -16,6 +9,12 @@ import (
 	"github.com/inverse-inc/packetfence/go/sharedutils"
 	dhcp "github.com/krolaw/dhcp4"
 	netadv "github.com/simon/go-netadv"
+	"math"
+	"net"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
 )
 
 type DHCPHandler struct {
@@ -106,8 +105,9 @@ func (d *Interfaces) readConfig() {
 		ethIf.Name = eth.Name
 
 		adresses, _ := eth.Addrs()
-		for _, adresse := range adresses {
+		added := false
 
+		for _, adresse := range adresses {
 			var NetIP *net.IPNet
 			var IP net.IP
 			IP, NetIP, _ = net.ParseCIDR(adresse.String())
@@ -134,11 +134,14 @@ func (d *Interfaces) readConfig() {
 					continue
 				}
 				NetInt := strings.Split(ConfNet.Dev, ",")
-				if (NetIP.Contains(net.ParseIP(ConfNet.DhcpStart)) && NetIP.Contains(net.ParseIP(ConfNet.DhcpEnd))) || NetIP.Contains(net.ParseIP(ConfNet.NextHop)) || (stringInSlice(ethIf.Name, NetInt)) {
+
+				if !added && ((NetIP.Contains(net.ParseIP(ConfNet.DhcpStart)) && NetIP.Contains(net.ParseIP(ConfNet.DhcpEnd))) || NetIP.Contains(net.ParseIP(ConfNet.NextHop)) || (stringInSlice(ethIf.Name, NetInt))) {
 					if int(binary.BigEndian.Uint32(net.ParseIP(ConfNet.DhcpStart).To4())) > int(binary.BigEndian.Uint32(net.ParseIP(ConfNet.DhcpEnd).To4())) {
 						log.LoggerWContext(ctx).Error("Wrong configuration, check your network " + key)
 						continue
 					}
+
+					added = true
 					// IP per role
 					if ConfNet.SplitNetwork == "enabled" {
 						var keyConfRoles pfconfigdriver.PfconfigKeys

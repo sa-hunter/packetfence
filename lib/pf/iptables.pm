@@ -610,11 +610,16 @@ sub generate_if_src_to_chain {
     foreach my $dev (@dev) {
         $rules .= "-A PREROUTING -p tcp -i $dev -m state --state NEW -j CONNMARK$inc\n";
         $rules .= "-A PREROUTING -p udp -i $dev -m state --state NEW -j CONNMARK$inc\n";
+        $rules .= "-A PREROUTING -p icmp -i $dev -m state --state NEW -j CONNMARK$inc\n";
         $rules .= "\n";
         $inc++;
     }
-    $rules .= "-A PREROUTING -p tcp -m state --state ESTABLISHED,RELATED -j CONNMARK --restore-mark\n";
-    $rules .= "-A PREROUTING -p udp -m state --state ESTABLISHED,RELATED -j CONNMARK --restore-mark\n";
+    #$rules .= "-A PREROUTING -p tcp -m state --state ESTABLISHED,RELATED -j CONNMARK --restore-mark\n";
+    #$rules .= "-A PREROUTING -p udp -m state --state ESTABLISHED,RELATED -j CONNMARK --restore-mark\n";
+    #$rules .= "-A PREROUTING -p udp -m state --state ESTABLISHED,RELATED -j CONNMARK --restore-mark\n";
+    $rules .= "-A OUTPUT -p tcp -m state --state ESTABLISHED,RELATED -j CONNMARK --restore-mark\n";
+    $rules .= "-A OUTPUT -p udp -m state --state ESTABLISHED,RELATED -j CONNMARK --restore-mark\n";
+    $rules .= "-A OUTPUT -p icmp -m state --state ESTABLISHED,RELATED -j CONNMARK --restore-mark\n";
     return $rules;
 }
 
