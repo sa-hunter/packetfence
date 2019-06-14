@@ -24,6 +24,7 @@ use IO::Interface::Simple;
 use pf::log;
 use Readonly;
 use NetAddr::IP;
+use List::MoreUtils qw(uniq);
 use pf::constants;
 use pf::config::cluster;
 
@@ -126,7 +127,7 @@ sub iptables_generate {
         'routed_postrouting_inline' => '','input_inter_vlan_if' => '',
         'domain_postrouting' => '','mangle_postrouting_inline' => '',
         'filter_forward_isol_vlan' => '', 'input_inter_isol_vlan_if' => '',
-        'filter_forward' => '',
+        'filter_forward' => '', 'mangle_if_src_mark' => '', 'mangle_if_pre_mark' => '',
     );
 
     # global substitution variables
@@ -153,6 +154,9 @@ sub iptables_generate {
         $tags{'eduroam_radius_virtualserver'} = "# eduroam integration is not configured\n";
         $tags{'eduroam_radius_listening'} = "# eduroam integration is not configured\n";
     }
+    # Speciale interface special routing
+    $tags{'mangle_if_src_mark'} .= $self->generate_int_if_src_to_mark();
+    $tags{'mangle_if_pre_mark'} .= $self->generate_if_src_to_chain();
 
     if (is_inline_enforcement_enabled()) {
         # Note: I'm giving references to this guy here so he can directly mess with the tables
@@ -186,6 +190,7 @@ sub iptables_generate {
         $tags{'filter_if_src_to_chain'}, $tags{'filter_forward_inline'},
         $tags{'mangle_if_src_to_chain'}, $tags{'mangle_prerouting_inline'},
         $tags{'nat_if_src_to_chain'}, $tags{'nat_prerouting_inline'},
+        $tags{'mangle_if_src_mark'},
   );
 
     generate_domain_rules(\$tags{'filter_forward_domain'}, \$tags{'domain_postrouting'});
@@ -563,6 +568,53 @@ sub generate_inline_if_src_to_chain {
         }
     }
 
+    return $rules;
+}
+
+=item generate_int_if_src_to_mark
+
+
+
+=cut
+
+sub generate_int_if_src_to_mark {
+    my ($self) = @_;
+    my $logger = get_logger();
+    my $rules = '';
+
+    my @dev = uniq(map { map { $_ } split(',',$ConfigNetworks{$_}{'dev'}) } keys %ConfigNetworks);
+    my $inc = 4;
+    foreach my $dev (@dev) {
+        $rules .= ":CONNMARK$inc - [0:0]\n";
+        $rules .= "-A CONNMARK$inc -j MARK --set-mark $inc\n";
+        $rules .= "-A CONNMARK$inc -j CONNMARK --save-mark\n";
+        $rules .= "\n";
+        $inc++;
+    }
+    return $rules;
+}
+
+=item generate_if_src_to_chain
+
+Creating proper source interface matches to jump to the right chains for special interface.
+
+=cut
+
+sub generate_if_src_to_chain {
+    my ($self) = @_;
+    my $logger = get_logger();
+    my $rules = '';
+
+    my @dev = uniq(map { map { $_ } split(',',$ConfigNetworks{$_}{'dev'}) } keys %ConfigNetworks);
+    my $inc = 4;
+    foreach my $dev (@dev) {
+        $rules .= "-A PREROUTING -p tcp -i $dev -m state --state NEW -j CONNMARK$inc\n";
+        $rules .= "-A PREROUTING -p udp -i $dev -m state --state NEW -j CONNMARK$inc\n";
+        $rules .= "\n";
+        $inc++;
+    }
+    $rules .= "-A PREROUTING -p tcp -m state --state ESTABLISHED,RELATED -j CONNMARK --restore-mark\n";
+    $rules .= "-A PREROUTING -p udp -m state --state ESTABLISHED,RELATED -j CONNMARK --restore-mark\n";
     return $rules;
 }
 
