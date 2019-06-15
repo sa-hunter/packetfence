@@ -203,7 +203,7 @@ func ShuffleDNS(ConfNet pfconfigdriver.RessourseNetworkConf) (r []byte) {
 
 func ShuffleGateway(ConfNet pfconfigdriver.RessourseNetworkConf) (r []byte) {
 	if ConfNet.NextHop != "" {
-		return []byte(net.ParseIP(ConfNet.Gateway).To4())
+		return Shuffle(ConfNet.Gateway)
 	} else if ConfNet.ClusterIPs != "" {
 		if ConfNet.Type == "inlinel2" && ConfNet.NatEnabled == "disabled" {
 			return []byte(net.ParseIP(ConfNet.Gateway).To4())
