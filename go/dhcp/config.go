@@ -2,6 +2,13 @@ package main
 
 import (
 	"encoding/binary"
+	"math"
+	"net"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
 	cache "github.com/fdurand/go-cache"
 	"github.com/inverse-inc/packetfence/go/dhcp/pool"
 	"github.com/inverse-inc/packetfence/go/log"
@@ -9,12 +16,6 @@ import (
 	"github.com/inverse-inc/packetfence/go/sharedutils"
 	dhcp "github.com/krolaw/dhcp4"
 	netadv "github.com/simon/go-netadv"
-	"math"
-	"net"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
 )
 
 type DHCPHandler struct {

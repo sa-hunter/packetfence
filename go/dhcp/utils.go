@@ -440,3 +440,11 @@ func stringInSlice(a string, list []string) bool {
 	}
 	return false
 }
+
+func setOptionServerIdentifier(srvIP net.IP, handlerIP net.IP) net.IP {
+	if srvIP.Equal(handlerIP) || srvIP.Equal(net.IPv4zero) || srvIP.Equal(net.IPv4bcast) {
+		return handlerIP
+	} else {
+		return srvIP
+	}
+}
