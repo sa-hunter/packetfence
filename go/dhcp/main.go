@@ -545,7 +545,7 @@ func (h *Interface) ServeDHCP(ctx context.Context, p dhcp.Packet, msgType dhcp.M
 			serverIdBytes := options[dhcp.OptionServerIdentifier]
 			if len(serverIdBytes) == 4 {
 				serverId := net.IPv4(serverIdBytes[0], serverIdBytes[1], serverIdBytes[2], serverIdBytes[3])
-				if !serverId.Equal(handler.ip.To4()) {
+				if !serverId.Equal(setOptionServerIdentifier(srvIP, handler.ip).To4()) {
 					log.LoggerWContext(ctx).Debug(fmt.Sprintf("Not replying to %s because this server didn't perform the offer (offered by %s, we are %s)", prettyType, serverId, handler.ip.To4()))
 					return Answer{}
 				}
