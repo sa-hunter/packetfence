@@ -438,7 +438,7 @@ func (h *Interface) ServeDHCP(ctx context.Context, p dhcp.Packet, msgType dhcp.M
 					}
 				}
 				// Layer 3 Test
-				pingreply := sharedutils.Ping(dhcp.IPAdd(handler.start, free).String(), 1)
+				pingreply := sharedutils.Ping(setOptionServerIdentifier(srvIP, handler.ip).To4(),dhcp.IPAdd(handler.start, free),h.Name, 1)
 				if pingreply || inarp {
 					// Found in the arp cache or able to ping it
 					ipaddr := dhcp.IPAdd(handler.start, free)
