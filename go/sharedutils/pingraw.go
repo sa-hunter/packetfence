@@ -25,37 +25,26 @@ type iphdr struct {
 func Pingraw(srcIP net.IP, dstIP net.IP, ifname string) net.PacketConn {
 	var err error
 	s, _ := syscall.Socket(syscall.AF_INET, syscall.SOCK_RAW, syscall.IPPROTO_RAW)
-	addr := syscall.SockaddrInet4{
-		Port: 0,
-	}
-
+	addr := syscall.SockaddrInet4{}
 	copy(addr.Addr[:], dstIP.To4())
+	addr.Port = 0
 
 	if err = syscall.SetsockoptInt(s, syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1); err != nil {
 		log.Fatal(err)
 	}
-
 	if err = syscall.SetsockoptString(s, syscall.SOL_SOCKET, syscall.SO_BINDTODEVICE, ifname); err != nil {
 		log.Fatal(err)
 	}
 
-	// packet := pkt(dstIP, srcIP)
 	f := os.NewFile(uintptr(s), "")
 	c, err := net.FilePacketConn(f)
-	f.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
-	// p := ipv4.NewPacketConn(c)
-	// i := ipv4.NewControlMessage(c)
-	// iface, err := net.InterfaceByName(ifname)
+	packet := pkt(dstIP, srcIP)
+	err = syscall.Sendto(s, packet, 0, &addr)
 
 	return c
-	// p.SetDeadline(t)
-	// err = syscall.Sendto(fd, packet, 0, &addr)
-	// if err != nil {
-	//     log.Fatal("Sendto:", err)
-	// }
 }
 
 func pkt(dstIP net.IP, srcIP net.IP) []byte {
@@ -65,9 +54,11 @@ func pkt(dstIP net.IP, srcIP net.IP) []byte {
 		TotalLen: 20 + 10, // 20 bytes for IP, 10 for ICMP
 		TTL:      64,
 		Protocol: 1, // ICMP
-		Dst:      net.IPv4(127, 0, 0, 1),
+		// Dst:      net.IPv4(127, 0, 0, 1),
 		// ID, Src and Checksum will be set for us by the kernel
 	}
+	h.Dst = dstIP.To4()
+	h.Src = srcIP.To4()
 
 	icmp := []byte{
 		8, // type: echo request
@@ -84,7 +75,6 @@ func pkt(dstIP net.IP, srcIP net.IP) []byte {
 	cs := csum(icmp)
 	icmp[2] = byte(cs)
 	icmp[3] = byte(cs >> 8)
-
 	out, err := h.Marshal()
 	if err != nil {
 		log.Fatal(err)
@@ -102,3 +92,4 @@ func csum(b []byte) uint16 {
 	s = s + s>>16
 	return uint16(^s)
 }
+

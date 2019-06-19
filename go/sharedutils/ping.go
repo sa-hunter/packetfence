@@ -1,10 +1,8 @@
 package sharedutils
 
 import (
-	"bytes"
 	"errors"
 	"net"
-	"os"
 	"time"
 )
 
@@ -124,23 +122,9 @@ func Pinger(srcIP net.IP, dstIP net.IP, ifname string, timeout int) error {
 	c.SetDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
 	defer c.Close()
 
-	typ := icmpv4EchoRequest
-	xid, xseq := os.Getpid()&0xffff, 1
-	wb, err := (&icmpMessage{
-		Type: typ, Code: 0,
-		Body: &icmpEcho{
-			ID: xid, Seq: xseq,
-			Data: bytes.Repeat([]byte("Go Go Gadget Ping!!!"), 3),
-		},
-	}).Marshal()
-	if err != nil {
-		return err
-	}
-	if _, err = c.WriteTo(wb, &net.IPAddr{dstIP.To4(), ""}); err != nil {
-		return err
-	}
 	var m *icmpMessage
-	rb := make([]byte, 20+len(wb))
+	var err error
+	rb := make([]byte, 1024)
 	for {
 		if _, _, err = c.ReadFrom(rb); err != nil {
 			return err
