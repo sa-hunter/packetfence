@@ -1,17 +1,30 @@
 package pool
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"sync"
+
+	"gopkg.in/alexcesaro/statsd.v2"
 )
 
+// FreeMac is the Free Mac address constant
 const FreeMac = "00:00:00:00:00:00"
+
+// FakeMac is the Fake Mac address constant
 const FakeMac = "ff:ff:ff:ff:ff:ff"
 
-type PoolBackend interface {
-	NewDHCPPool(capacity uint64)
-	ReserveIPIndex(index uint64, mac string) (error, string)
+// Random ip constant
+const Random = 1
+
+// OldestReleased ip constant
+const OldestReleased = 2
+
+// Backend interface
+type Backend interface {
+	NewDHCPPool(ctx context.Context, capacity uint64, algorithm int, StatsdClient *statsd.Client)
+	ReserveIPIndex(index uint64, mac string) (string, error)
 	IsFreeIPAtIndex(index uint64) bool
 	GetMACIndex(index uint64) (uint64, string, error)
 	GetFreeIPIndex(mac string) (uint64, string, error)
@@ -24,24 +37,31 @@ type PoolBackend interface {
 	Listen() bool
 }
 
-type PoolCreater func(uint64, string, *sql.DB) (PoolBackend, error)
+// Creater function
+type Creater func(context.Context, uint64, string, int, *statsd.Client, *sql.DB) (Backend, error)
 
-var poolLookup = map[string]PoolCreater{
+var poolLookup = map[string]Creater{
 	"memory": NewMemoryPool,
 	"mysql":  NewMysqlPool,
 }
 
-func CreatePool(poolType string, capacity uint64, name string, sql *sql.DB) (PoolBackend, error) {
+// Create function
+func Create(ctx context.Context, poolType string, capacity uint64, name string, algorithm int, StatsdClient *statsd.Client, sql *sql.DB) (Backend, error) {
 	if creater, found := poolLookup[poolType]; found {
-		return creater(capacity, name, sql)
+		return creater(ctx, capacity, name, algorithm, StatsdClient, sql)
 	}
 
 	return nil, fmt.Errorf("Pool of %s not found", poolType)
 }
 
+// DHCPPool struct
 type DHCPPool struct {
-	lock     *sync.Mutex
-	free     map[uint64]bool
-	mac      map[uint64]string
-	capacity uint64
+	lock      *sync.RWMutex
+	free      map[uint64]bool
+	mac       map[uint64]string
+	capacity  uint64
+	released  map[uint64]int64
+	algorithm int
+	ctx       context.Context
+	statsd    *statsd.Client
 }

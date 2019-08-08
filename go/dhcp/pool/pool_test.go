@@ -1,16 +1,23 @@
 package pool
 
 import (
-	"testing"
+	"context"
 	"database/sql"
+	"testing"
+
+	"github.com/inverse-inc/packetfence/go/log"
+	"gopkg.in/alexcesaro/statsd.v2"
 )
 
+var ctx = log.LoggerNewContext(context.Background())
+var StatsdClient, _ = statsd.New()
 var MySQLdatabase *sql.DB
 
 func TestReserveIPIndex(t *testing.T) {
 	cap := uint64(5)
-	dp, err := CreatePool("memory", cap, "PoolTest", MySQLdatabase)
-	// spew.Dump(dp)
+	algo := Random
+	dp, err := Create(ctx, "memory", cap, "PoolTest", algo, StatsdClient, MySQLdatabase)
+
 	if err != nil {
 		t.Error("Got an error creating the pool", err)
 	}
@@ -23,7 +30,7 @@ func TestReserveIPIndex(t *testing.T) {
 
 	// Try to reserve all the IPs
 	for i := uint64(0); i < dp.GetDHCPPool().capacity; i++ {
-		err, returnedMac := dp.ReserveIPIndex(i, mac)
+		returnedMac, err := dp.ReserveIPIndex(i, mac)
 		if err != nil {
 			t.Error("Got an error and shouldn't have gotten one", err)
 		}
@@ -37,14 +44,14 @@ func TestReserveIPIndex(t *testing.T) {
 	}
 
 	// Try to reserve an IP again
-	err, _ = dp.ReserveIPIndex(3, mac)
+	_, err = dp.ReserveIPIndex(3, mac)
 
 	if err == nil {
 		t.Error("Didn't get an error when trying to double-reserve an IP")
 	}
 
 	// Try to reserve an IP outside the capacity
-	err, _ = dp.ReserveIPIndex(cap, mac)
+	_, err = dp.ReserveIPIndex(cap, mac)
 
 	if err == nil {
 		t.Error("Didn't get an error when trying to reserve an IP outside the capacity")
@@ -53,7 +60,9 @@ func TestReserveIPIndex(t *testing.T) {
 
 func TestFreeIPIndex(t *testing.T) {
 	cap := uint64(5)
-	dp, err := CreatePool("memory", cap,"PoolTest", MySQLdatabase)
+	algo := Random
+	dp, err := Create(ctx, "memory", cap, "PoolTest", algo, StatsdClient, MySQLdatabase)
+
 	if err != nil {
 		t.Error("Got an error creating the pool", err)
 	}
@@ -100,7 +109,9 @@ func TestFreeIPIndex(t *testing.T) {
 
 func TestGetFreeIPIndex(t *testing.T) {
 	cap := uint64(1000)
-	dp, err := CreatePool("memory", cap, "PoolTest", MySQLdatabase)
+	algo := Random
+	dp, err := Create(ctx, "memory", cap, "PoolTest", algo, StatsdClient, MySQLdatabase)
+
 	if err != nil {
 		t.Error("Got an error creating the pool", err)
 	}
@@ -142,7 +153,7 @@ func TestGetFreeIPIndex(t *testing.T) {
 	// No two pool orders should be the same when getting IPs
 	// This has a very minimal chance of failing even if the code works
 	// If it does, go buy yourself a 6/49
-	dp2, err := CreatePool("memory", cap, "PollTest", MySQLdatabase)
+	dp2, err := Create(ctx, "memory", cap, "PoolTest", algo, StatsdClient, MySQLdatabase)
 	if err != nil {
 		t.Error("Got an error creating the pool", err)
 	}
@@ -170,7 +181,8 @@ func TestGetFreeIPIndex(t *testing.T) {
 
 func TestFreeIPsRemaining(t *testing.T) {
 	cap := uint64(1000)
-	dp, err := CreatePool("memory", cap, "PoolTest", MySQLdatabase)
+	algo := Random
+	dp, err := Create(ctx, "memory", cap, "PoolTest", algo, StatsdClient, MySQLdatabase)
 	if err != nil {
 		t.Error("Got an error creating the pool", err)
 	}
@@ -220,7 +232,8 @@ func TestFreeIPsRemaining(t *testing.T) {
 
 func TestCapacity(t *testing.T) {
 	cap := uint64(1000)
-	dp, err := CreatePool("memory", cap, "PoolTest", MySQLdatabase)
+	algo := Random
+	dp, err := Create(ctx, "memory", cap, "PoolTest", algo, StatsdClient, MySQLdatabase)
 	if err != nil {
 		t.Error("Got an error creating the pool", err)
 	}
