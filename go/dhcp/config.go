@@ -87,8 +87,8 @@ func (d *Interfaces) readConfig() {
 
 	var intDhcp []string
 
-	var interfaces_dhcp []string
-	interfaces_dhcp = sharedutils.RemoveDuplicates(append(interfaces.Element, DHCPAdditionalinterfaces.Element...))
+	var interfacesDhcp []string
+	interfacesDhcp = sharedutils.RemoveDuplicates(append(interfaces.Element, DHCPAdditionalinterfaces.Element...))
 
 	for _, vi := range DHCPinterfaces.Element {
 		for key, dhcpint := range vi.(map[string]interface{}) {
@@ -99,7 +99,7 @@ func (d *Interfaces) readConfig() {
 	}
 
 	wg := &sync.WaitGroup{}
-	for _, v := range sharedutils.RemoveDuplicates(append(interfaces_dhcp, intDhcp...)) {
+	for _, v := range sharedutils.RemoveDuplicates(append(interfacesDhcp, intDhcp...)) {
 
 		eth, err := net.InterfaceByName(v)
 
