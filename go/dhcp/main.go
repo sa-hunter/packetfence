@@ -26,6 +26,7 @@ import (
 	"github.com/inverse-inc/packetfence/go/sharedutils"
 	"github.com/inverse-inc/packetfence/go/timedlock"
 	dhcp "github.com/krolaw/dhcp4"
+	"gopkg.in/alexcesaro/statsd.v2"
 )
 
 var DHCPConfig *Interfaces
@@ -50,6 +51,9 @@ var ctx = context.Background()
 var webservices pfconfigdriver.PfConfWebservices
 
 var intNametoInterface map[string]*Interface
+
+// StatsdClient global var
+var StatsdClient *statsd.Client
 
 const FreeMac = "00:00:00:00:00:00"
 const FakeMac = "ff:ff:ff:ff:ff:ff"
@@ -355,7 +359,7 @@ func (h *Interface) ServeDHCP(ctx context.Context, p dhcp.Packet, msgType dhcp.M
 					handler.hwcache.Delete(p.CHAddr().String())
 
 					// Reserve the ip
-					err, returnedMac = handler.available.ReserveIPIndex(uint64(x.(int)), p.CHAddr().String())
+					returnedMac, err = handler.available.ReserveIPIndex(uint64(x.(int)), p.CHAddr().String())
 					if err != nil && returnedMac == p.CHAddr().String() {
 						free = x.(int)
 					} else {
@@ -391,7 +395,7 @@ func (h *Interface) ServeDHCP(ctx context.Context, p dhcp.Packet, msgType dhcp.M
 					} else if returnedMac == FreeMac {
 						log.LoggerWContext(ctx).Debug("The IP asked by the device is available in the pool")
 						// The ip is free use it
-						err, returnedMac = handler.available.ReserveIPIndex(uint64(element), p.CHAddr().String())
+						returnedMac, err = handler.available.ReserveIPIndex(uint64(element), p.CHAddr().String())
 						// Reserve the ip
 						if err != nil {
 							// The ip is not available
@@ -438,7 +442,7 @@ func (h *Interface) ServeDHCP(ctx context.Context, p dhcp.Packet, msgType dhcp.M
 					}
 				}
 				// Layer 3 Test
-				pingreply := sharedutils.Ping(setOptionServerIdentifier(srvIP, handler.ip).To4(),dhcp.IPAdd(handler.start, free),h.Name, 1)
+				pingreply := sharedutils.Ping(setOptionServerIdentifier(srvIP, handler.ip).To4(), dhcp.IPAdd(handler.start, free), h.Name, 1)
 				if pingreply || inarp {
 					// Found in the arp cache or able to ping it
 					ipaddr := dhcp.IPAdd(handler.start, free)

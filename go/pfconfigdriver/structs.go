@@ -324,6 +324,7 @@ type RessourseNetworkConf struct {
 	Interface               Interface `json:"interface"`
 	PortalFQDN              string    `json:"portal_fqdn"`
 	PoolBackend             string    `json:"pool_backend"`
+	Algorithm               string    `json:"algorithm"`
 }
 
 type PfRoles struct {

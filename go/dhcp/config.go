@@ -18,6 +18,7 @@ import (
 	netadv "github.com/simon/go-netadv"
 )
 
+// DHCPHandler struct
 type DHCPHandler struct {
 	ip            net.IP // Server IP to use
 	vip           net.IP
@@ -27,31 +28,40 @@ type DHCPHandler struct {
 	leaseDuration time.Duration // Lease period
 	hwcache       *cache.Cache
 	xid           *cache.Cache
-	available     pool.PoolBackend // DHCPPool keeps track of the available IPs in the pool
+	available     pool.Backend // DHCPPool keeps track of the available IPs in the pool
 	layer2        bool
 	role          string
 	ipReserved    string
 	ipAssigned    map[string]uint32
 }
 
+// Interfaces struct
 type Interfaces struct {
 	intsNet []Interface
 }
 
+// Interface struct
 type Interface struct {
-	Name    string
-	intNet  *net.Interface
-	network []Network
-	layer2  []*net.IPNet
-	Ipv4    net.IP
-	Ipv6    net.IP
+	Name          string
+	intNet        *net.Interface
+	network       []Network
+	layer2        []*net.IPNet
+	Ipv4          net.IP
+	Ipv6          net.IP
+	InterfaceType string
+	relayIP       net.IP
+	listenPort    int
 }
 
+// Network struct
 type Network struct {
 	network     net.IPNet
 	dhcpHandler *DHCPHandler
 	splittednet bool
 }
+
+const bootpClient = 68
+const bootpServer = 67
 
 func newDHCPConfig() *Interfaces {
 	var p Interfaces
@@ -75,20 +85,21 @@ func (d *Interfaces) readConfig() {
 
 	pfconfigdriver.FetchDecodeSocket(ctx, &keyConfNet)
 
-	var int_dhcp []string
+	var intDhcp []string
 
 	var interfaces_dhcp []string
 	interfaces_dhcp = sharedutils.RemoveDuplicates(append(interfaces.Element, DHCPAdditionalinterfaces.Element...))
+
 	for _, vi := range DHCPinterfaces.Element {
-		for key, dhcp_int := range vi.(map[string]interface{}) {
+		for key, dhcpint := range vi.(map[string]interface{}) {
 			if key == "int" {
-				int_dhcp = append(int_dhcp, dhcp_int.(string))
+				intDhcp = append(intDhcp, dhcpint.(string))
 			}
 		}
 	}
 
 	wg := &sync.WaitGroup{}
-	for _, v := range sharedutils.RemoveDuplicates(append(interfaces_dhcp, int_dhcp...)) {
+	for _, v := range sharedutils.RemoveDuplicates(append(interfaces_dhcp, intDhcp...)) {
 
 		eth, err := net.InterfaceByName(v)
 
@@ -104,11 +115,13 @@ func (d *Interfaces) readConfig() {
 
 		ethIf.intNet = eth
 		ethIf.Name = eth.Name
+		ethIf.InterfaceType = "server"
+		ethIf.listenPort = bootpServer
 
 		adresses, _ := eth.Addrs()
 		added := false
-
 		for _, adresse := range adresses {
+
 			var NetIP *net.IPNet
 			var IP net.IP
 			IP, NetIP, _ = net.ParseCIDR(adresse.String())
@@ -118,12 +131,14 @@ func (d *Interfaces) readConfig() {
 				continue
 			}
 
-			if IP.To16() != nil {
+			if IsIPv6(IP) {
 				ethIf.Ipv6 = IP
+				continue
 			}
-			if IP.To4() != nil {
+			if IsIPv4(IP) {
 				ethIf.Ipv4 = IP
 			}
+
 			ethIf.layer2 = append(ethIf.layer2, NetIP)
 
 			for _, key := range keyConfNet.Keys {
@@ -141,7 +156,6 @@ func (d *Interfaces) readConfig() {
 						log.LoggerWContext(ctx).Error("Wrong configuration, check your network " + key)
 						continue
 					}
-
 					added = true
 					// IP per role
 					if ConfNet.SplitNetwork == "enabled" {
@@ -226,9 +240,9 @@ func (d *Interfaces) readConfig() {
 							sharedutils.Dec(ips)
 
 							DHCPScope.leaseRange = dhcp.IPRange(ip, ips)
-
+							algorithm, _ := strconv.Atoi(ConfNet.Algorithm)
 							// Initialize dhcp pool
-							available, _ := pool.CreatePool(ConfNet.PoolBackend, uint64(dhcp.IPRange(ip, ips)), DHCPNet.network.IP.String()+Role, MySQLdatabase)
+							available, _ := pool.Create(ctx, ConfNet.PoolBackend, uint64(dhcp.IPRange(ip, ips)), DHCPNet.network.IP.String()+Role, algorithm, StatsdClient, MySQLdatabase)
 
 							DHCPScope.available = available
 
@@ -289,8 +303,10 @@ func (d *Interfaces) readConfig() {
 						DHCPScope.leaseDuration = time.Duration(seconds) * time.Second
 						DHCPScope.leaseRange = dhcp.IPRange(net.ParseIP(ConfNet.DhcpStart), net.ParseIP(ConfNet.DhcpEnd))
 
+						algorithm, _ := strconv.Atoi(ConfNet.Algorithm)
+
 						// Initialize dhcp pool
-						available, _ := pool.CreatePool(ConfNet.PoolBackend, uint64(dhcp.IPRange(net.ParseIP(ConfNet.DhcpStart), net.ParseIP(ConfNet.DhcpEnd))), DHCPNet.network.IP.String(), MySQLdatabase)
+						available, _ := pool.Create(ctx, ConfNet.PoolBackend, uint64(dhcp.IPRange(net.ParseIP(ConfNet.DhcpStart), net.ParseIP(ConfNet.DhcpEnd))), DHCPNet.network.IP.String(), algorithm, StatsdClient, MySQLdatabase)
 
 						DHCPScope.available = available
 
@@ -307,6 +323,7 @@ func (d *Interfaces) readConfig() {
 						DHCPScope.hwcache = hwcache
 
 						xid := cache.New(time.Duration(4)*time.Second, 2*time.Second)
+
 						DHCPScope.xid = xid
 						wg.Add(1)
 						go func() {
@@ -321,11 +338,6 @@ func (d *Interfaces) readConfig() {
 						options[dhcp.OptionRouter] = ShuffleGateway(ConfNet)
 						options[dhcp.OptionDomainName] = []byte(ConfNet.DomainName)
 						DHCPScope.options = options
-						if len(ConfNet.NextHop) > 0 {
-							DHCPScope.layer2 = false
-						} else {
-							DHCPScope.layer2 = true
-						}
 						DHCPNet.dhcpHandler = DHCPScope
 
 						ethIf.network = append(ethIf.network, DHCPNet)

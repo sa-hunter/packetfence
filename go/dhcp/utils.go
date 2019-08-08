@@ -448,3 +448,13 @@ func setOptionServerIdentifier(srvIP net.IP, handlerIP net.IP) net.IP {
 		return srvIP
 	}
 }
+
+// IsIPv4 test if the ip is v4
+func IsIPv4(address net.IP) bool {
+	return strings.Count(address.String(), ":") < 2
+}
+
+// IsIPv6 test if the ip is v6
+func IsIPv6(address net.IP) bool {
+	return strings.Count(address.String(), ":") >= 2
+}
