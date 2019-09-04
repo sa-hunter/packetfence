@@ -1416,26 +1416,6 @@ $t->options_ok("/api/v1/config/base/general")
                         text => "Australia/Sydney",
                         value => "Australia/Sydney"
                     },
-                                        {
-                        text => "CET",
-                        value => "CET"
-                    },
-                                        {
-                        text => "CST6CDT",
-                        value => "CST6CDT"
-                    },
-                                        {
-                        text => "EET",
-                        value => "EET"
-                    },
-                                        {
-                        text => "EST",
-                        value => "EST"
-                    },
-                                        {
-                        text => "EST5EDT",
-                        value => "EST5EDT"
-                    },
                     {
                         text => "Europe/Amsterdam",
                         value => "Europe/Amsterdam"
@@ -1620,10 +1600,6 @@ $t->options_ok("/api/v1/config/base/general")
                         text => "Europe/Zurich",
                         value => "Europe/Zurich"
                     },
-                                        {
-                        text => "HST",
-                        value => "HST"
-                    },
                     {
                         text => "Indian/Chagos",
                         value => "Indian/Chagos"
@@ -1655,22 +1631,6 @@ $t->options_ok("/api/v1/config/base/general")
                     {
                         text => "Indian/Reunion",
                         value => "Indian/Reunion"
-                    },
-                                        {
-                        text => "MET",
-                        value => "MET"
-                    },
-                                        {
-                        text => "MST",
-                        value => "MST"
-                    },
-                                        {
-                        text => "MST7MDT",
-                        value => "MST7MDT"
-                    },
-                                        {
-                        text => "PST8PDT",
-                        value => "PST8PDT"
                     },
                     {
                         text => "Pacific/Apia",
@@ -1815,14 +1775,6 @@ $t->options_ok("/api/v1/config/base/general")
                     {
                         text => "Pacific/Wallis",
                         value => "Pacific/Wallis"
-                    },
-                                        {
-                        text => "UTC",
-                        value => "UTC"
-                    },
-                                        {
-                        text => "WET",
-                        value => "WET"
                     }
                 ],
                 default     => undef,
