@@ -107,21 +107,12 @@ sub isManaged {
     my ($self) = @_;
     my $name = $self->name;
     if (isenabled($pf::config::Config{'services'}{$name})) {
-        if ($self->isSlaveMode()) {
-            return $TRUE;
-        }
-        return $cluster_enabled;
+        return $TRUE;
     } else {
         return 0;
     }
 }
 
-sub isSlaveMode {
-    my ($self) = @_;
-    if ($pf::config::Config{'database_advanced'}{'masterslave'} eq 'ON' && $pf::config::Config{'database_advanced'}{'masterslavemode'} eq 'SLAVE') {
-        return $TRUE;
-    }
-}
 =head1 AUTHOR
 
 Inverse inc. <info@inverse.ca>

@@ -51,9 +51,6 @@ sub _run {
         server_ip => $management_network ? $management_network->{Tvip} // $management_network->{Tip} : "",
         performance_schema => $Config{database_advanced}{performance_schema},
         max_connect_errors => $Config{database_advanced}{max_connect_errors},
-        masterslave => $Config{database_advanced}{masterslave},
-        masterslavemode => $Config{database_advanced}{masterslavemode},
-        readonly => $Config{database_advanced}{readonly},
     );
 
     # Only generate cluster configuration if there is more than 1 enabled host in the cluster
@@ -76,7 +73,7 @@ sub _run {
 
             db_config => $Config{database},
         );
-    } elsif ($Config{database_advanced}{other_members} ne "" && $Config{database_advanced}{masterslave} eq "OFF") {
+    } elsif ($Config{database_advanced}{other_members} ne "" ) {
         %vars = (
             %vars,
 
