@@ -476,7 +476,7 @@ func (p *Proxy) nodeStatus(ctx context.Context, mac string) bool {
 	status := false
 	var Status string
 	err := p.Nodedb.QueryRow(mac).Scan(&Status)
-	if err != nil {
+	if err == nil {
 		if Status == "reg" {
 			status = true
 		}
