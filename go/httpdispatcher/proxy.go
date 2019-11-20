@@ -32,6 +32,7 @@ type Proxy struct {
 	ParkingSecurityEvent *sql.Stmt // prepared statement for security_event
 	IP4log               *sql.Stmt // prepared statement for ip4log queries
 	IP6log               *sql.Stmt // prepared statement for ip6log queries
+	Nodedb               *sql.Stmt // prepared statement for node queries
 	Db                   *sql.DB
 	apiClient            *unifiedapiclient.Client
 	ShowParkingPortal    bool
@@ -121,6 +122,7 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p.handleParking(ctx, w, r)
+	p.handleDetectionMechanismRegister(ctx, w, r, fqdn.String())
 
 	if r.URL.Path == "/kindle-wifi/wifistub.html" {
 		log.LoggerWContext(ctx).Debug(fmt.Sprintln(host, "KINDLE WIFI PROBE HANDLING"))
@@ -165,9 +167,9 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		if (passThrough.checkDetectionMechanisms(ctx, fqdn.String()) || passThrough.URIException.MatchString(r.RequestURI)) && passThrough.SecureRedirect {
-			PortalURL.Scheme = "http"
-		}
+		// if (passThrough.checkDetectionMechanisms(ctx, fqdn.String()) || passThrough.URIException.MatchString(r.RequestURI)) && passThrough.SecureRedirect {
+		// 	PortalURL.Scheme = "http"
+		// }
 		log.LoggerWContext(ctx).Debug(fmt.Sprintln(host, "Redirect to the portal"))
 		PortalURL.RawQuery = "destination_url=" + r.Header.Get("X-Forwarded-Proto") + "://" + host + r.RequestURI
 		w.Header().Set("Location", PortalURL.String())
@@ -233,6 +235,12 @@ func (p *Proxy) Configure(ctx context.Context) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "httpd.dispatcher: database security_event prepared statement error: %s", err)
 	}
+
+	p.Nodedb, err = p.Db.Prepare("select node.status from node where mac = ?")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "httpd.dispatcher: database nodedb prepared statement error: %s", err)
+	}
+
 	p.apiClient = unifiedapiclient.NewFromConfig(ctx)
 
 	parking := pfconfigdriver.Config.PfConf.Parking
@@ -422,17 +430,7 @@ func (p *Proxy) IP2Mac(ctx context.Context, ip string) (string, error) {
 func (p *Proxy) handleParking(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	var ipAddress string
 
-	fwdAddress := r.Header.Get("X-Forwarded-For")
-	if fwdAddress != "" {
-
-		ipAddress = fwdAddress
-
-		// If we got an array... grab the first IP
-		ips := strings.Split(fwdAddress, ", ")
-		if len(ips) > 1 {
-			ipAddress = ips[0]
-		}
-	}
+	ipAddress = p.getIP(ctx, r)
 
 	if ipAddress != "" {
 		MAC, err := p.IP2Mac(ctx, ipAddress)
@@ -455,6 +453,54 @@ func (p *Proxy) handleParking(ctx context.Context, w http.ResponseWriter, r *htt
 			}
 		}
 	}
+}
+
+func (p *Proxy) handleDetectionMechanismRegister(ctx context.Context, w http.ResponseWriter, r *http.Request, fqdn string) {
+	var ipAddress string
+	ipAddress = p.getIP(ctx, r)
+
+	if ipAddress != "" {
+		MAC, err := p.IP2Mac(ctx, ipAddress)
+
+		if err == nil {
+			if p.nodeStatus(ctx, MAC) && passThrough.checkDetectionMechanisms(ctx, fqdn) {
+				log.LoggerWContext(ctx).Info("Device register and match the portal detection mechanism for " + MAC)
+				p.reverse(ctx, w, r, r.Host)
+			}
+		}
+	}
+}
+
+// nodeStatus search for status of the device
+func (p *Proxy) nodeStatus(ctx context.Context, mac string) bool {
+	status := false
+	var Status string
+	err := p.Nodedb.QueryRow(mac).Scan(&Status)
+	if err != nil {
+		if Status == "reg" {
+			status = true
+		}
+	}
+
+	return status
+}
+
+func (p *Proxy) getIP(ctx context.Context, r *http.Request) string {
+
+	var ipAddress string
+
+	fwdAddress := r.Header.Get("X-Forwarded-For")
+	if fwdAddress != "" {
+
+		ipAddress = fwdAddress
+
+		// If we got an array... grab the first IP
+		ips := strings.Split(fwdAddress, ", ")
+		if len(ips) > 1 {
+			ipAddress = ips[0]
+		}
+	}
+	return ipAddress
 }
 
 func (p *Proxy) reverse(ctx context.Context, w http.ResponseWriter, r *http.Request, host string) {
