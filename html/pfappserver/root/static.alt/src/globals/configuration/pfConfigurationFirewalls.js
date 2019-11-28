@@ -139,7 +139,7 @@ export const pfConfigurationFirewallViewFields = (context) => {
           ]
         },
         {
-          if: ['BarracudaNG', 'JSONRPC', 'JuniperSRX', 'FamilyZone'].includes(firewallType),
+          if: ['BarracudaNG', 'JSONRPC', 'JuniperSRX', 'FamilyZone', 'CiscoIsePic'].includes(firewallType),
           label: i18n.t('Username'),
           fields: [
             {
@@ -151,7 +151,7 @@ export const pfConfigurationFirewallViewFields = (context) => {
           ]
         },
         {
-          if: ['BarracudaNG', 'Checkpoint', 'FortiGate', 'Iboss', 'JuniperSRX', 'WatchGuard', 'LightSpeedRocket', 'SmoothWall', 'FamilyZone'].includes(firewallType),
+          if: ['BarracudaNG', 'Checkpoint', 'FortiGate', 'Iboss', 'JuniperSRX', 'WatchGuard', 'LightSpeedRocket', 'SmoothWall', 'FamilyZone', 'CiscoIsePic'].includes(firewallType),
           label: i18n.t('Secret or Key'),
           fields: [
             {
@@ -175,7 +175,7 @@ export const pfConfigurationFirewallViewFields = (context) => {
           ]
         },
         {
-          if: ['BarracudaNG', 'Checkpoint', 'FortiGate', 'Iboss', 'JuniperSRX', 'WatchGuard', 'JSONRPC', 'LightSpeedRocket', 'SmoothWall'].includes(firewallType),
+          if: ['BarracudaNG', 'Checkpoint', 'FortiGate', 'Iboss', 'JuniperSRX', 'WatchGuard', 'JSONRPC', 'LightSpeedRocket', 'SmoothWall', 'CiscoIsePic'].includes(firewallType),
           label: i18n.t('Port of the service'),
           text: i18n.t('If you use an alternative port, please specify.'),
           fields: [
