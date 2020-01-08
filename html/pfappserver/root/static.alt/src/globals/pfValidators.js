@@ -990,45 +990,62 @@ export const sourceExists = (value) => {
   })
 }
 
-let switchExistsDebouncer
 export const switchExists = (value) => {
   if (!value) return true
-  if (!switchExistsDebouncer) {
-    switchExistsDebouncer = createDebouncer()
-  }
-  return new Promise((resolve) => {
-    switchExistsDebouncer({
-      handler: () => {
-        store.dispatch('config/getSwitches').then((response) => {
-          if (response.length === 0) resolve(true)
-          else resolve(response.filter(switche => switche.id.toLowerCase() === value.toLowerCase()).length > 0)
-        }).catch(() => {
-          resolve(true)
-        })
-      },
-      time: debounceTime
-    })
+  return store.dispatch('config/getSwitches').then((response) => {
+    if (response.length === 0) return true
+    else return response.filter(switche => switche.id.toLowerCase() === value.toLowerCase()).length > 0
+  }).catch(() => {
+      return true
   })
 }
 
-let switchGroupExistsDebouncer
+export const switchNotExists = (value) => {
+  if (!value) return true
+  return store.dispatch('config/getSwitches').then((response) => {
+    if (response.length === 0) return false
+    else return response.filter(switche => switche.id.toLowerCase() === value.toLowerCase()).length === 0
+  }).catch(() => {
+      return true
+  })
+}
+
+export const switchTypeExists = (value) => {
+  if (!value) return true
+  return store.dispatch('$_switches/optionsBySwitchGroup', 'default').then((response) => {
+    const { meta: { type: { allowed } = {} } = {} } = response
+    for (const { options } of allowed) {
+      for (let option of options) {
+        const { value: v } = option
+        if (v === value) return true
+      }
+    }
+    return false
+  }).catch(() => {
+    return true
+  })
+}
+
+export const switchModeExists = (value) => {
+  if (!value) return true
+  return store.dispatch('$_switches/optionsBySwitchGroup', 'default').then((response) => {
+    const { meta: { mode: { allowed } = {} } = {} } = response
+    for (const { value: v } of allowed) {
+      if (v === value) return true
+    }
+    return false
+  }).catch(() => {
+    return true
+  })
+}
+
 export const switchGroupExists = (value) => {
   if (!value) return true
-  if (!switchGroupExistsDebouncer) {
-    switchGroupExistsDebouncer = createDebouncer()
-  }
-  return new Promise((resolve) => {
-    switchGroupExistsDebouncer({
-      handler: () => {
-        store.dispatch('config/getSwitchGroups').then((response) => {
-          if (response.length === 0) resolve(true)
-          else resolve(response.filter(switchGroup => switchGroup.id.toLowerCase() === value.toLowerCase()).length > 0)
-        }).catch(() => {
-          resolve(true)
-        })
-      },
-      time: debounceTime
-    })
+  return store.dispatch('config/getSwitchGroups').then((response) => {
+    if (response.length === 0) return true
+    else return response.filter(switchGroup => switchGroup.id.toLowerCase() === value.toLowerCase()).length > 0
+  }).catch(() => {
+    return true
   })
 }
 
