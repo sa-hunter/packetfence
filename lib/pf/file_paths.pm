@@ -113,7 +113,8 @@ our (
     $fingerbank_default_config_file,
     $fingerbank_doc_file,
     $api_i18n_dir,
-    $iptable_config_file
+    $iptable_config_file,
+    $ssl_config_file, $ssl_default_config_file
 );
 
 BEGIN {
@@ -204,6 +205,7 @@ BEGIN {
         $fingerbank_doc_file
         $api_i18n_dir
         $iptable_config_file
+        $ssl_config_file $ssl_default_config_file
     );
 }
 
@@ -319,6 +321,8 @@ $switch_filters_config_file = catfile($conf_dir,"switch_filters.conf");
 $stats_config_file = catfile($conf_dir, "stats.conf");
 $stats_config_default_file = catfile($conf_dir, "stats.conf.defaults");
 $iptable_config_file = catfile($conf_dir, "iptables.conf");
+$ssl_config_file = catfile($conf_dir,"ssl.conf");
+$ssl_default_config_file = catfile($conf_dir,"ssl.conf.defaults");
 
 $oui_url               = 'http://standards.ieee.org/regauth/oui/oui.txt';
 $dhcp_fingerprints_url = 'http://www.packetfence.org/dhcp_fingerprints.conf';
@@ -365,7 +369,8 @@ $captiveportal_default_profile_templates_path = catdir ($captiveportal_profile_t
     $syslog_config_file,
     $realm_config_file,
     $fingerbank_collector_env_defaults_file,
-    $portal_modules_config_file
+    $portal_modules_config_file,
+    $ssl_config_file
 );
 
 $pffilter_socket_path = catfile($var_dir, "run/pffilter.sock");
